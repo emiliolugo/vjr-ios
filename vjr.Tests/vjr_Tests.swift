@@ -6,11 +6,41 @@
 //
 
 import Testing
+@testable import vjr_
 
-struct vjr_Tests {
+struct ContentViewModelTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    @Test func startsOnFeedTab() {
+        let vm = ContentViewModel()
+        #expect(vm.selectedTab == .feed)
     }
 
+    @Test func tabSelectionChanges() {
+        let vm = ContentViewModel()
+
+        vm.selectedTab = .trips
+        #expect(vm.selectedTab == .trips)
+
+        vm.selectedTab = .friends
+        #expect(vm.selectedTab == .friends)
+
+        vm.selectedTab = .profile
+        #expect(vm.selectedTab == .profile)
+
+        vm.selectedTab = .feed
+        #expect(vm.selectedTab == .feed)
+    }
+
+    @Test func showNewTripDefaultsFalse() {
+        let vm = ContentViewModel()
+        #expect(vm.showNewTrip == false)
+    }
+
+    @Test func showNewTripCanBeToggled() {
+        let vm = ContentViewModel()
+        vm.showNewTrip = true
+        #expect(vm.showNewTrip == true)
+        vm.showNewTrip = false
+        #expect(vm.showNewTrip == false)
+    }
 }
