@@ -1,0 +1,9 @@
+# Secrets
+.env*
+
+# Docs
+/docs
+
+# Vapor / Swift Package Manager build artifacts
+api/.build/
+api/*.xcodeproj
