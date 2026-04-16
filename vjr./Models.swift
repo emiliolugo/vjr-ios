@@ -12,7 +12,7 @@
 
 import Foundation
 
-struct User: Codable, Identifiable {
+struct User: Codable, Identifiable, Hashable {
     let id: String
     let userId: String
     let username: String
@@ -22,6 +22,24 @@ struct User: Codable, Identifiable {
     let isPrivate: Bool
     let followers: [Follow]?
     let following: [Follow]?
+}
+
+extension User: Equatable {
+    static func == (lhs: User, rhs: User) -> Bool {
+        return lhs.id == rhs.id && lhs.userId == rhs.userId && lhs.username == rhs.username
+    }
+}
+
+extension User {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(userId)
+        hasher.combine(username)
+        hasher.combine(email)
+        hasher.combine(firstName)
+        hasher.combine(lastName)
+        hasher.combine(isPrivate)
+    }
 }
 
 struct VisitedCountry: Codable, Identifiable {
@@ -50,6 +68,31 @@ struct FeedItem: Identifiable {
     let username: String
     let countryKey: String
     let countryName: String // resolved from CountryStore.shared
+}
+
+// MARK: - API request bodies
+
+struct VisitedUpdateBody: Codable {
+    let userId: String       // Clerk userId (currentUserId)
+    let country: [String]    // full country names
+    let visited: [Bool]      // parallel — true = add, false = remove
+}
+
+struct FollowToggleBody: Codable {
+    let personBeingFollowed: String  // username of target
+    let personFollowing: String      // username of current user
+    let follow: Bool
+}
+
+struct SendFollowRequestBody: Codable {
+    let requester: String   // username of current user
+    let requestee: String   // username of target
+}
+
+struct HandleFollowBody: Codable {
+    let followerId: String   // User.id (prisma cuid) of the requester
+    let followeeId: String   // User.id (prisma cuid) of the current user
+    let isAccepted: Bool
 }
 
 // MARK: - API response envelopes

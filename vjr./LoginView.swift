@@ -15,7 +15,7 @@ struct LoginView: View {
 
     @State private var inputUsername = ""
     @State private var isLoading     = false
-    @State private var errorMessage: String?
+    @State private var loginError: AppError?
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -47,15 +47,6 @@ struct LoginView: View {
                 )
                 .padding(.horizontal, 32)
 
-            // Error message
-            if let error = errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .padding(.top, 8)
-                    .padding(.horizontal, 32)
-            }
-
             // Continue button
             Button(action: login) {
                 Group {
@@ -85,6 +76,17 @@ struct LoginView: View {
         }
         .background(AppTheme.background(for: colorScheme))
         .foregroundStyle(AppTheme.primaryText(for: colorScheme))
+        .alert(
+            "Something went wrong",
+            isPresented: Binding(
+                get: { loginError != nil },
+                set: { if !$0 { loginError = nil } }
+            )
+        ) {
+            Button("OK") { loginError = nil }
+        } message: {
+            Text(loginError?.localizedDescription ?? "")
+        }
     }
 
     private func login() {
@@ -92,7 +94,7 @@ struct LoginView: View {
         guard !username.isEmpty else { return }
 
         isLoading = true
-        errorMessage = nil
+        loginError = nil
 
         Task {
             defer { isLoading = false }
@@ -103,7 +105,7 @@ struct LoginView: View {
                 currentUserPrismaId  = user.id
                 currentUserIsPrivate = user.isPrivate
             } catch {
-                errorMessage = "User not found. Check the username and try again."
+                loginError = AppError.from(error)
             }
         }
     }

@@ -22,9 +22,15 @@ final class APIClient {
 
     func fetch<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {
         let url = buildURL(path: path, query: query)
-        let (data, response) = try await URLSession.shared.data(from: url)
-        try validate(response, data: data)
-        return try decoder.decode(T.self, from: data)
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            try validate(response, data: data)
+            return try decode(T.self, from: data)
+        } catch let e as AppError {
+            throw e
+        } catch {
+            throw AppError.network(error.localizedDescription)
+        }
     }
 
     // MARK: - POST
@@ -34,9 +40,15 @@ final class APIClient {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
-        let (data, response) = try await URLSession.shared.data(for: request)
-        try validate(response, data: data)
-        return try decoder.decode(T.self, from: data)
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            try validate(response, data: data)
+            return try decode(T.self, from: data)
+        } catch let e as AppError {
+            throw e
+        } catch {
+            throw AppError.network(error.localizedDescription)
+        }
     }
 
     // MARK: - Helpers
@@ -53,20 +65,15 @@ final class APIClient {
         guard let http = response as? HTTPURLResponse else { return }
         guard (200..<300).contains(http.statusCode) else {
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw APIError.httpError(statusCode: http.statusCode, message: message)
+            throw AppError.server(http.statusCode, message)
         }
     }
-}
 
-// MARK: - Errors
-
-enum APIError: LocalizedError {
-    case httpError(statusCode: Int, message: String)
-
-    var errorDescription: String? {
-        switch self {
-        case .httpError(let code, let message):
-            return "HTTP \(code): \(message)"
+    private func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw AppError.network(error.localizedDescription)
         }
     }
 }

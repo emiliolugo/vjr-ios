@@ -33,6 +33,9 @@ struct RootView: View {
 
 struct MainTabView: View {
     @State private var vm = ContentViewModel()
+    @State private var tripStore = TripLocalStore()
+    @AppStorage("currentUsername") private var currentUsername = ""
+    @AppStorage("currentUserId") private var currentUserId = ""
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -41,7 +44,7 @@ struct MainTabView: View {
             Group {
                 switch vm.selectedTab {
                 case .feed:     FeedView()
-                case .trips:    TripsView()
+                case .trips:    TripsView(store: tripStore)
                 case .friends:  FriendsView()
                 case .profile:  ProfileView()
                 }
@@ -52,5 +55,18 @@ struct MainTabView: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .background(AppTheme.background(for: colorScheme))
+        .sheet(isPresented: $vm.showNewTrip) {
+            NewTripFlowView(
+                store: tripStore,
+                username: currentUsername,
+                userId: currentUserId
+            )
+        }
+        .onAppear {
+            tripStore.setContext(username: currentUsername)
+        }
+        .onChange(of: currentUsername) { _, newName in
+            tripStore.setContext(username: newName)
+        }
     }
 }
