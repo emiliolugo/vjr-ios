@@ -43,7 +43,7 @@ struct MainTabView: View {
         VStack(spacing: 0) {
             Group {
                 switch vm.selectedTab {
-                case .feed:     FeedView()
+                case .feed:     FeedView(store: tripStore)
                 case .trips:    TripsView(store: tripStore)
                 case .friends:  FriendsView()
                 case .profile:  ProfileView()
